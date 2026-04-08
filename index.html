@@ -56,7 +56,7 @@ color:rgba(255,255,255,0.12);
 <script>
 (function(){
   const CONFIG={
-    streamUrl:"https://jiotvpllive.cdn.jio.com//bpk-tv/StarSports2Hin_BTS/output/index.mpd",
+    streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/StarSports2Hin_BTS/output/index.mpd",
     keyId:"a3ed8dc0e0cb5d238da80ee0a85bd2e1",
     key:"67a96992e6406606f3480ab58d7f540c",
     cookieUrl:"https://jow.vodep39240327.workers.dev/"
@@ -137,7 +137,7 @@ color:rgba(255,255,255,0.12);
     }catch(e){}
 
     video.addEventListener("play", () => {
-      video.muted = false;
+      video.muted = true;
     }, { once: true });
 
   });
