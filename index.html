@@ -3,49 +3,83 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Live Stream Player</title>
+    <title>VG TV - Live Stream</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
     <style>
-        body, html { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; font-family: sans-serif; }
-        video { width: 100vw; height: 100vh; outline: none; object-fit: contain; }
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            background: #000; 
+            height: 100%; 
+            overflow: hidden; 
+            font-family: Arial, sans-serif; 
+        }
+        video { 
+            width: 100vw; 
+            height: 100vh; 
+            outline: none; 
+            object-fit: contain; 
+        }
+        #loading {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 10;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
+    <div id="loading">Waking up proxy server... this might take 45 seconds.</div>
+    
     <video id="video" controls autoplay muted playsinline></video>
 
     <script>
         const video = document.getElementById('video');
+        const loadingBox = document.getElementById('loading');
         
-        // 1. The blocked target stream
+        // 1. The target stream you want to play
         const streamUrl = "https://vt-ip.vodep39240327.workers.dev/2010.m3u8";
         
-        // 2. Your Cloudflare Worker Proxy Base
-        const proxyBase = "https://stream-proxy.vgtv.workers.dev/";
+        // 2. Your newly created Render Proxy
+        const proxyBase = "https://vgtv-proxy.onrender.com/";
 
         if (Hls.isSupported()) {
+            // Show loading text just in case Render is asleep
+            loadingBox.style.display = 'block';
+
             const hls = new Hls({
                 maxBufferLength: 30,
-                // THIS IS THE MAGIC: It forces every network request through your proxy
+                // THE SKELETON KEY: This forces the main link AND all video chunks through your proxy
                 xhrSetup: function(xhr, url) {
-                    // Prevent double-proxying
                     if (!url.startsWith(proxyBase)) {
                         xhr.open('GET', proxyBase + url, true);
                     }
                 }
             });
             
-            // Load the stream (the xhrSetup intercepts it automatically)
             hls.loadSource(streamUrl);
             hls.attachMedia(video);
             
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                video.play().catch(() => console.log("Click play to start video."));
+                // Video is ready, hide the loading text
+                loadingBox.style.display = 'none';
+                video.play().catch(() => console.log("User must interact with the page to unmute/play."));
             });
 
             hls.on(Hls.Events.ERROR, function (event, data) {
                 if (data.fatal) {
-                    console.error("Stream Error:", data.type, "| Details:", data.details);
+                    loadingBox.style.display = 'none';
+                    console.error("Stream Error Type:", data.type, "| Details:", data.details);
                     if (data.response) {
                         console.error("HTTP Status Code:", data.response.code);
                     }
@@ -56,7 +90,7 @@
             // Fallback for Safari/iOS
             video.src = proxyBase + streamUrl;
             video.addEventListener('loadedmetadata', function() {
-                video.play().catch(() => console.log("Click play to start video."));
+                video.play();
             });
         }
     </script>
